@@ -4,7 +4,7 @@ import { firebaseAuth } from '../../FirebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { Button } from "react-native-ios-kit";
 
-const Register = () => {
+const Register = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmation, setConfirmation] = useState('');
@@ -16,6 +16,8 @@ const Register = () => {
                 const response = await createUserWithEmailAndPassword(auth, email, password);
     
                 console.log(response);
+
+                navigation.navigate('Login');
             } catch(error) {
                 alert(error.message);
             }
