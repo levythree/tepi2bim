@@ -24,18 +24,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: '#fff',
     },
-    logo: {
-        top: 210,
-        position: 'absolute',
-        height: 120,
-        width: 120,
-        alignSelf: 'center',
-    },
     text: {
         alignSelf: 'center',
         fontSize: 22,
     },
     button: {
+        top: 299,
+        left: 130,
         width: 100,
         height: 50,
         marginTop: 25,
@@ -46,7 +41,10 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
     },
     logout: {
-        color: '#e81010',
+        top: 375,
+        right: 130,
+        borderColor: 'red',
+        backgroundColor: 'red',
         width: 100,
         height: 50,
         marginTop: 25,

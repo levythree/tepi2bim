@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, Image } from 'react-native';
-import React from 'react'
+import { View, Text, TextInput, StyleSheet, Image } from 'react-native';
+import React, {useState} from 'react'
 
 import { Button } from "react-native-ios-kit";
 
@@ -8,9 +8,18 @@ import { firebaseAuth } from '../../FirebaseConfig';
 const AddNote = () => {
     const auth = firebaseAuth;
 
+    const [note, setNote] = useState('');
+
+    const saveNote = () => {
+
+    }
+
     return (
         <View style={styles.container}>
-            <Text>Olá!</Text>
+            <TextInput style={styles.input} placeholder="Escreva sua nota aqui" autoCapitalize="none"></TextInput>
+            <Button style={styles.button} onPress={() => saveNote()} inline centered rounded inverted>
+                <Text style={styles.buttonText}>Salvar</Text>
+            </Button>
         </View>
     )
 }
@@ -20,6 +29,15 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         backgroundColor: '#fff',
+    },
+    input: {
+        marginVertical: 4,
+        marginHorizontal: 20,
+        height: 50,
+        borderWidth: 1,
+        borderRadius: 4,
+        padding: 10,
+        backgroundColor: '#fff'
     },
     logo: {
         top: 210,
