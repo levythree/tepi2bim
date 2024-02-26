@@ -5,15 +5,12 @@ import { Button } from "react-native-ios-kit";
 
 import { firebaseAuth } from '../../FirebaseConfig';
 
-const LoggedInScreen = ({ navigation }) => {
+const AddNote = () => {
+    const auth = firebaseAuth;
+
     return (
         <View style={styles.container}>
-            <Button style={styles.logout} onPress={() => firebaseAuth.signOut()} inline centered rounded inverted>
-                <Text style={styles.buttonText}>Log out</Text>
-            </Button>
-            <Button style={styles.button} onPress={() => navigation.navigate('Add Note')} inline centered rounded inverted>
-                <Text style={styles.buttonText}>Add Note</Text>
-            </Button>
+            <Text>Olá!</Text>
         </View>
     )
 }
@@ -44,13 +41,7 @@ const styles = StyleSheet.create({
         fontSize: 17,
         color: '#fff',
         alignSelf: 'center',
-    },
-    logout: {
-        color: '#e81010',
-        width: 100,
-        height: 50,
-        marginTop: 25,
     }
 })
 
-export default LoggedInScreen;
+export default AddNote;
