@@ -11,7 +11,7 @@ const Login = ({ navigation }) => {
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    
+
     const signIn = async () => {
         try {
             const response = await signInWithEmailAndPassword(auth, email, password);
