@@ -1,38 +1,117 @@
-import { View, Text, StyleSheet, TextInput, FlatList, Image } from 'react-native';
-import React, {useState} from 'react'
+import { View, Text, StyleSheet, TextInput, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
 
 import { Button } from "react-native-ios-kit";
 
-import { firebaseAuth } from '../../FirebaseConfig';
+import { firebaseAuth, firebaseFirestore } from '../../FirebaseConfig';
+import { setDoc, addDoc, deleteDoc, doc, getDocs, collection } from 'firebase/firestore';
 
 const LoggedInScreen = ({ navigation }) => {
     const [notes, setNotes] = useState([]);
     const [newNote, setNewNote] = useState('');
+    const [editingNoteId, setEditingNoteId] = useState(null);
+    const [editingNoteContent, setEditingNoteContent] = useState('');
 
-    const addNote = () => {
-        if (newNote.trim() !== '') {
-            setNotes([...notes, { id: Date.now().toString(), content: newNote }]);
+    const fetchNotes = async () => {
+        if (firebaseAuth.currentUser) {
+            const snapshot = await getDocs(collection(firebaseFirestore, 'users', firebaseAuth.currentUser.uid, 'notes'));
+            const notesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            setNotes(notesData);
         }
     }
 
-    const deleteNote = id => {
+    useEffect(() => {
+        fetchNotes();
+    }, []);
+
+    const addNote = async () => {
+        if (newNote.trim() !== '') {
+            const noteId = Date.now().toString();
+            setNotes([...notes, { id: noteId, content: newNote }]);
+
+            await setDoc(doc(firebaseFirestore, "users", firebaseAuth.currentUser.uid, "notes", noteId), {content: newNote});
+            setNewNote('');
+        }
+    }
+
+    const deleteNote = async id => {
         const updatedNotes = notes.filter(item => item.id !== id);
         
         setNotes(updatedNotes);
+
+        await deleteDoc(doc(firebaseFirestore, "users", firebaseAuth.currentUser.uid, "notes", id));
+    }
+
+    const startEditing = (id, content) => {
+        setEditingNoteId(id);
+        setEditingNoteContent(content);
+    }
+
+    const saveEdit = async () => {
+        const updatedNotes = notes.map(note => 
+            note.id === editingNoteId ? { ...note, content: editingNoteContent } : note
+        );
+        setNotes(updatedNotes);
+
+        await setDoc(doc(firebaseFirestore, "users", firebaseAuth.currentUser.uid, "notes", editingNoteId), { content: editingNoteContent });
+        
+        setEditingNoteId(null);
+        setEditingNoteContent('');
+    }
+
+    const cancelEdit = () => {
+        setEditingNoteId(null);
+        setEditingNoteContent('');
     }
 
     return (
         <View style={styles.container}>
-            <FlatList data={notes} keyExtractor={(item) => item.id} renderItem={({ item }) => (
+            <FlatList 
+                data={notes} 
+                keyExtractor={(item) => item.id} 
+                renderItem={({ item }) => (
                 <View style={styles.note}>
-                    <Text style={styles.noteText}>{item.content}</Text>
-                    <Button style={styles.removeNote} onPress={() => deleteNote(item.id)} inline rounded inverted>
-                        <Text style={styles.buttonText}>Excluir</Text>
-                    </Button>
+                    {editingNoteId === item.id ? (
+                        <View style={styles.editInputContainer}>
+                            <TextInput
+                                style={[styles.noteText, styles.editInput]}
+                                value={editingNoteContent}
+                                onChangeText={(text) => setEditingNoteContent(text)}
+                                underlineColorAndroid="white"
+                            />
+                        </View>
+                    ) : (
+                        <Text style={styles.noteText}>{item.content}</Text>
+                    )}
+                    {editingNoteId === item.id ? (
+                        <View style={styles.editButtonsContainer}>
+                            <Button style={styles.saveEdit} onPress={saveEdit} inline rounded inverted>
+                                <Text style={styles.editText}>Salvar</Text>
+                            </Button>
+                            <Button style={styles.cancelEdit} onPress={cancelEdit} inline rounded inverted>
+                                <Text style={styles.buttonText}>Cancelar</Text>
+                            </Button>
+                        </View>
+                    ) : (
+                        <View style={styles.defaultButtonsContainer}>
+                            <Button style={styles.editNote} onPress={() => startEditing(item.id, item.content)} inline rounded inverted>
+                                <Text style={styles.buttonText}>Editar</Text>
+                            </Button>
+                            <Button style={styles.removeNote} onPress={() => deleteNote(item.id)} inline rounded inverted>
+                                <Text style={styles.buttonText}>Excluir</Text>
+                            </Button>
+                        </View>
+                    )}
                 </View>
-            )}>
-            </FlatList>
-            <TextInput style={styles.input} value={newNote} onChangeText={(text) => setNewNote(text)} placeholder="Escreva sua nota aqui" autoCapitalize="none" />
+            )} />
+            <TextInput 
+                style={styles.input} 
+                value={newNote} 
+                onChangeText={(text) => setNewNote(text)} 
+                placeholder="Escreva sua nota aqui" 
+                autoCapitalize="none" 
+            />
             <View style={styles.buttonContainer}>
                 <Button style={styles.button} onPress={addNote} inline centered rounded inverted>
                     <Text style={styles.buttonText}>Add Note</Text>
@@ -42,7 +121,7 @@ const LoggedInScreen = ({ navigation }) => {
                 </Button>
             </View>
         </View>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
@@ -50,65 +129,88 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         backgroundColor: '#fff',
-        position: 'relative'
+        position: 'relative',
+        padding: 10,
     },
     note: {
-        display: "flex",
-        flexDirection: "row",
-        alignSelf: "center",
-        marginTop: 12,
-        width: 350,
-        height: 40,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginVertical: 8,
+        padding: 8,
         backgroundColor: "#0c1899",
-        borderWidth: 2
+        borderRadius: 8,
     },
     noteText: {
         color: "#f0f00c",
-        marginLeft: 8,
-        marginTop: 2,
-        fontSize: 20
+        fontSize: 20,
+        flex: 1,
     },
     removeNote: {
-        marginLeft: 10,
-        marginTop: 7,
-        position: "absolute",
         borderColor: 'red',
         backgroundColor: 'red',
-        width: 50,
-        height: 20,
+        width: 70,
+        height: 30,
+        marginLeft: 10,
+    },
+    editNote: {
+        borderColor: '#56bf1f',
+        backgroundColor: '#56bf1f',
+        width: 70,
+        height: 30,
+        marginLeft: 10,
+    },
+    saveEdit: {
+        borderColor: 'yellow',
+        backgroundColor: 'yellow',
+        width: 70,
+        height: 30,
+        marginLeft: 10,
+    },
+    cancelEdit: {
+        borderColor: 'gray',
+        backgroundColor: 'gray',
+        width: 90,
+        height: 30,
+        marginLeft: 10,
+    },
+    editInputContainer: {
+        flex: 1,
+        borderBottomWidth: 1,
+        borderBottomColor: 'white',
+        marginRight: 10,
+    },
+    editInput: {
+        color: "#f0f00c",
+        fontSize: 20,
     },
     input: {
-        position: "absolute",
-        top: 630,
         marginHorizontal: 20,
-        height: 60,
-        width: 350,
+        marginVertical: 10,
+        height: 40,
         borderWidth: 1,
         borderRadius: 4,
         padding: 10,
         backgroundColor: '#fff',
-        zIndex: 1
-    },
-    text: {
-        alignSelf: 'center',
-        fontSize: 22,
     },
     button: {
         marginBottom: 20,
-        marginLeft: 255,
+        marginTop: 25,
         width: 100,
         height: 50,
-        marginTop: 25,
     },
     buttonText: {
         fontSize: 17,
         color: '#fff',
-        alignSelf: 'center',
+        textAlign: 'center',
+    },
+    editText: {
+        fontSize: 17,
+        color: 'black',
+        textAlign: 'center',
     },
     logout: {
-        position: "absolute",
-        right: 255,
-        top: 25,
+        marginTop: 25,
         borderColor: 'red',
         backgroundColor: 'red',
         width: 100,
@@ -117,8 +219,15 @@ const styles = StyleSheet.create({
     buttonContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 10,
         paddingHorizontal: 20,
+    },
+    editButtonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+    },
+    defaultButtonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
     }
 });
 

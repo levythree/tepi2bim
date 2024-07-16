@@ -6,7 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Login from './app/screens/Login';
 import Register from './app/screens/Register';
 import LoggedInScreen from './app/screens/LoggedInScreen';
-import ForgotPassword from './app/screens/ForgotPassword';
+import ForgotPassword from './app/screens/ForgotPassword';  
 import AddNote from './app/screens/AddNote';
 
 import { onAuthStateChanged } from 'firebase/auth';

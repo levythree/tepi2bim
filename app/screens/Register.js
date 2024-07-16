@@ -1,7 +1,9 @@
 import { View, TextInput, StyleSheet, Text, Image } from 'react-native';
 import React, { useState } from 'react';
 import { firebaseAuth } from '../../FirebaseConfig';
+import { firebaseFirestore } from '../../FirebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { setDoc, doc } from 'firebase/firestore';
 import { Button } from "react-native-ios-kit";
 
 const Register = ({ navigation }) => {
@@ -14,8 +16,12 @@ const Register = ({ navigation }) => {
         if (password === confirmation) {
             try {
                 const response = await createUserWithEmailAndPassword(auth, email, password);
-    
+                const userid = response.user.uid;
+
                 console.log(response);
+                console.log(userid);
+
+                await setDoc(doc(firebaseFirestore, "users", userid), { email: email });
 
                 navigation.navigate('Login');
             } catch(error) {
